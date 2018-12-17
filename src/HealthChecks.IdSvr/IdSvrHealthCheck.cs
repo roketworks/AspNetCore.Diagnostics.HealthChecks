@@ -11,25 +11,26 @@ namespace HealthChecks.IdSvr
     {
         const string IDSVR_DISCOVER_CONFIGURATION_SEGMENT = ".well-known/openid-configuration";
         private readonly Uri _idSvrUri;
-        public IdSvrHealthCheck(Uri idSvrUri)
+        private readonly HttpClient _httpClient;
+
+        public IdSvrHealthCheck(Uri idSvrUri, IHttpClientFactory httpClientFactory)
         {
             _idSvrUri = idSvrUri ?? throw new ArgumentNullException(nameof(idSvrUri));
+            _httpClient = httpClientFactory.CreateClient();
         }
+        
         public async Task<HealthCheckResult> CheckHealthAsync(HealthCheckContext context, CancellationToken cancellationToken = default)
         {
             try
             {
-                using (var httpClient = new HttpClient() { BaseAddress = _idSvrUri })
+                var response = await _httpClient.GetAsync(IDSVR_DISCOVER_CONFIGURATION_SEGMENT, cancellationToken);
+
+                if (!response.IsSuccessStatusCode)
                 {
-                    var response = await httpClient.GetAsync(IDSVR_DISCOVER_CONFIGURATION_SEGMENT);
-
-                    if (!response.IsSuccessStatusCode)
-                    {
-                        return new HealthCheckResult(context.Registration.FailureStatus, description: $"Discover endpoint is not responding with 200 OK, the current status is {response.StatusCode} and the content { (await response.Content.ReadAsStringAsync())}");
-                    }
-
-                    return HealthCheckResult.Healthy();
+                    return new HealthCheckResult(context.Registration.FailureStatus, description: $"Discover endpoint is not responding with 200 OK, the current status is {response.StatusCode} and the content { (await response.Content.ReadAsStringAsync())}");
                 }
+
+                return HealthCheckResult.Healthy();
             }
             catch (Exception ex)
             {

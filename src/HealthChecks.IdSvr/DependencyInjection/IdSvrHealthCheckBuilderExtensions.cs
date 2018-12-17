@@ -2,6 +2,7 @@
 using Microsoft.Extensions.Diagnostics.HealthChecks;
 using System;
 using System.Collections.Generic;
+using System.Net.Http;
 
 namespace Microsoft.Extensions.DependencyInjection
 {
@@ -23,9 +24,11 @@ namespace Microsoft.Extensions.DependencyInjection
         /// <returns>The <see cref="IHealthChecksBuilder"/>.</returns></param>
         public static IHealthChecksBuilder AddIdentityServer(this IHealthChecksBuilder builder, Uri idSvrUri, string name = default, HealthStatus? failureStatus = default, IEnumerable<string> tags = default)
         {
+            builder.Services.AddHttpClient(); 
+            
             return builder.Add(new HealthCheckRegistration(
                 name ?? NAME,
-                sp => new IdSvrHealthCheck(idSvrUri),
+                sp => new IdSvrHealthCheck(idSvrUri, sp.GetRequiredService<IHttpClientFactory>()),
                 failureStatus,
                 tags));
         }
