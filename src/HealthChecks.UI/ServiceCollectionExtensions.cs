@@ -23,11 +23,12 @@ namespace Microsoft.Extensions.DependencyInjection
                 .GetService<IConfiguration>();
 
             services.AddOptions();
-            services.Configure<Settings>((settings) =>
+            services.Configure<Settings>(settings =>
             {
                 configuration.Bind(Keys.HEALTHCHECKSUI_SECTION_SETTING_KEY, settings);
             });
 
+            services.AddHttpClient();
             services.AddSingleton<IHostedService, HealthCheckCollectorHostedService>();
             services.AddScoped<IHealthCheckFailureNotifier, WebHookFailureNotifier>();
             services.AddScoped<IHealthCheckReportCollector, HealthCheckReportCollector>();

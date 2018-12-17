@@ -22,17 +22,24 @@ namespace HealthChecks.UI.Core.HostedService
         private readonly IHealthCheckFailureNotifier _healthCheckFailureNotifier;
         private readonly Settings _settings;
         private readonly ILogger<HealthCheckReportCollector> _logger;
+        
+        private readonly HttpClient _httpClient;
+
         public HealthCheckReportCollector(
             HealthChecksDb db,
             IHealthCheckFailureNotifier healthCheckFailureNotifier,
             IOptions<Settings> settings,
+            IHttpClientFactory httpClientFactory,
             ILogger<HealthCheckReportCollector> logger)
         {
             _db = db ?? throw new ArgumentNullException(nameof(db));
             _healthCheckFailureNotifier = healthCheckFailureNotifier ?? throw new ArgumentNullException(nameof(healthCheckFailureNotifier));
             _settings = settings.Value ?? throw new ArgumentNullException(nameof(settings));
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+
+            _httpClient = httpClientFactory.CreateClient();
         }
+        
         public async Task Collect(CancellationToken cancellationToken)
         {
             using (_logger.BeginScope("HealthReportCollector is collection health checks results."))
@@ -68,10 +75,12 @@ namespace HealthChecks.UI.Core.HostedService
                 _logger.LogDebug("HealthReportCollector is completed.");
             }
         }
+        
         protected internal virtual Task<HttpResponseMessage> PerformRequest(string uri)
         {
-            return new HttpClient().GetAsync(uri);
+            return _httpClient.GetAsync(uri);
         }
+        
         private async Task<UIHealthReport> GetHealthReport(HealthCheckConfiguration configuration)
         {
             var (uri, name) = configuration;
@@ -91,6 +100,7 @@ namespace HealthChecks.UI.Core.HostedService
                     totalDuration: TimeSpan.FromSeconds(0));
             }
         }
+        
         private async Task<bool> HasLivenessRecoveredFromFailure(HealthCheckConfiguration configuration)
         {
             var previous = await GetHealthCheckExecution(configuration);
@@ -102,6 +112,7 @@ namespace HealthChecks.UI.Core.HostedService
 
             return false;
         }
+        
         private async Task<HealthCheckExecution> GetHealthCheckExecution(HealthCheckConfiguration configuration)
         {
             return await _db.Executions
@@ -110,6 +121,7 @@ namespace HealthChecks.UI.Core.HostedService
                 .Where(le => le.Name.Equals(configuration.Name, StringComparison.InvariantCultureIgnoreCase))
                 .SingleOrDefaultAsync();
         }
+        
         private async Task SaveExecutionHistory(HealthCheckConfiguration configuration, UIHealthReport healthReport)
         {
             _logger.LogDebug("HealthReportCollector save a new health report execution history.");
