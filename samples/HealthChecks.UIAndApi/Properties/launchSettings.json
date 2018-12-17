@@ -1,9 +1,10 @@
-{
+﻿{
+  "$schema": "http://json.schemastore.org/launchsettings.json",
   "iisSettings": {
-    "windowsAuthentication": false,
-    "anonymousAuthentication": true,
+    "windowsAuthentication": false, 
+    "anonymousAuthentication": true, 
     "iisExpress": {
-      "applicationUrl": "http://localhost:2122/",
+      "applicationUrl": "http://localhost:6001",
       "sslPort": 0
     }
   },
@@ -11,18 +12,19 @@
     "IIS Express": {
       "commandName": "IISExpress",
       "launchBrowser": true,
-      "launchUrl": "healthz",
+      "launchUrl": "healthchecks-ui",
       "environmentVariables": {
         "ASPNETCORE_ENVIRONMENT": "Development"
       }
     },
-    "HealthChecks.Sample": {
+    "HealthChecks.UIAndApi": {
       "commandName": "Project",
       "launchBrowser": true,
+      "launchUrl": "healthchecks-ui",
+      "applicationUrl": "http://localhost:5000",
       "environmentVariables": {
         "ASPNETCORE_ENVIRONMENT": "Development"
-      },
-      "applicationUrl": "http://localhost:2123/"
+      }
     }
   }
 }

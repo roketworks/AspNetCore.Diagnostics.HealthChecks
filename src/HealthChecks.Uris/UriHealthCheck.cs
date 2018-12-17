@@ -10,12 +10,12 @@ namespace HealthChecks.Uris
         : IHealthCheck
     {        
         private readonly UriHealthCheckOptions _options;
-        private readonly HttpClient _httpClient;
+        private readonly Func<HttpClient> _httpClientFactory;
 
-        public UriHealthCheck(UriHealthCheckOptions options, IHttpClientFactory httpClientFactory)
+        public UriHealthCheck(UriHealthCheckOptions options, Func<HttpClient> httpClientFactory)
         {
             _options = options ?? throw new ArgumentNullException(nameof(options));
-            _httpClient = httpClientFactory.CreateClient();
+            _httpClientFactory = httpClientFactory ?? throw new ArgumentNullException(nameof(httpClientFactory));
         }
         public async Task<HealthCheckResult> CheckHealthAsync(HealthCheckContext context, CancellationToken cancellationToken = default)
         {
@@ -35,6 +35,8 @@ namespace HealthChecks.Uris
                         return new HealthCheckResult(context.Registration.FailureStatus, description: $"{nameof(UriHealthCheck)} execution is cancelled.");
                     }
 
+                    var httpClient = _httpClientFactory();
+                    
                     var requestMessage = new HttpRequestMessage(method, item.Uri);
 
                     foreach (var header in item.Headers)
@@ -42,7 +44,7 @@ namespace HealthChecks.Uris
                         requestMessage.Headers.Add(header.Name, header.Value);
                     }
 
-                    var response = await _httpClient.SendAsync(requestMessage, cancellationToken);
+                    var response = await httpClient.SendAsync(requestMessage);
 
                     if (!((int)response.StatusCode >= expectedCodes.Min && (int)response.StatusCode <= expectedCodes.Max))
                     {
