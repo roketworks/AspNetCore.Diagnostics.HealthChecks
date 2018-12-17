@@ -24,11 +24,17 @@ namespace Microsoft.Extensions.DependencyInjection
         /// <returns>The <see cref="IHealthChecksBuilder"/>.</returns></param>
         public static IHealthChecksBuilder AddIdentityServer(this IHealthChecksBuilder builder, Uri idSvrUri, string name = default, HealthStatus? failureStatus = default, IEnumerable<string> tags = default)
         {
-            builder.Services.AddHttpClient(); 
+            var registrationName = name ?? NAME;
+
+            builder.Services.AddHttpClient(registrationName, (provider, client) => client.BaseAddress = idSvrUri); 
             
             return builder.Add(new HealthCheckRegistration(
-                name ?? NAME,
-                sp => new IdSvrHealthCheck(idSvrUri, sp.GetRequiredService<IHttpClientFactory>()),
+                registrationName,
+                sp =>
+                {
+                    var httpClientFactory = sp.GetRequiredService<IHttpClientFactory>();
+                    return new IdSvrHealthCheck(() => httpClientFactory.CreateClient(registrationName));
+                },
                 failureStatus,
                 tags));
         }

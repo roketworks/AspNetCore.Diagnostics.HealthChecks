@@ -10,20 +10,19 @@ namespace HealthChecks.IdSvr
         : IHealthCheck
     {
         const string IDSVR_DISCOVER_CONFIGURATION_SEGMENT = ".well-known/openid-configuration";
-        private readonly Uri _idSvrUri;
-        private readonly HttpClient _httpClient;
+        private readonly Func<HttpClient> _httpClientFactory;
 
-        public IdSvrHealthCheck(Uri idSvrUri, IHttpClientFactory httpClientFactory)
+        public IdSvrHealthCheck(Func<HttpClient> httpClientFactory)
         {
-            _idSvrUri = idSvrUri ?? throw new ArgumentNullException(nameof(idSvrUri));
-            _httpClient = httpClientFactory.CreateClient();
+            _httpClientFactory = httpClientFactory ?? throw new ArgumentNullException(nameof(httpClientFactory));
         }
         
         public async Task<HealthCheckResult> CheckHealthAsync(HealthCheckContext context, CancellationToken cancellationToken = default)
         {
             try
             {
-                var response = await _httpClient.GetAsync(IDSVR_DISCOVER_CONFIGURATION_SEGMENT, cancellationToken);
+                var httpClient = _httpClientFactory();
+                var response = await httpClient.GetAsync(IDSVR_DISCOVER_CONFIGURATION_SEGMENT, cancellationToken);
 
                 if (!response.IsSuccessStatusCode)
                 {
