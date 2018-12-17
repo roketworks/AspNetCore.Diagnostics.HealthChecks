@@ -81,8 +81,6 @@ namespace Microsoft.Extensions.DependencyInjection
 
             var options = UriHealthCheckOptions.CreateFromUris(uris);
             
-            builder.Services.AddHttpClient();
-
             var registrationName = name ?? NAME;
             return builder.Add(new HealthCheckRegistration(
                 registrationName,
@@ -109,8 +107,6 @@ namespace Microsoft.Extensions.DependencyInjection
             var options = UriHealthCheckOptions.CreateFromUris(uris);
             options.UseHttpMethod(httpMethod);
             
-            builder.Services.AddHttpClient();
-
             var registrationName = name ?? NAME;
             return builder.Add(new HealthCheckRegistration(
                 registrationName,
@@ -136,8 +132,6 @@ namespace Microsoft.Extensions.DependencyInjection
             var options = new UriHealthCheckOptions();
             uriOptions?.Invoke(options);
             
-            builder.Services.AddHttpClient();
-
             var registrationName = name ?? NAME;
             return builder.Add(new HealthCheckRegistration(
                 registrationName,
